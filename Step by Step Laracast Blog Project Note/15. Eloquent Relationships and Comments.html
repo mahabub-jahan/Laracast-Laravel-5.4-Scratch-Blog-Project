@@ -1,0 +1,59 @@
+#RelationShip between Comment and Post
+
+	class Post extends Model
+	{
+	    public function comments()
+	    {
+	        return $this->hasMany(Comment::class);
+	    }
+	}
+
+	In Tinker:
+	 -$post = App\Post::find(6);
+	  Note: it will show the value in posts database
+	 	-$post->comment //it not call as a method but call as a property
+	 	Note: we fetch only the comments that have a "post_id" equal to "id" of the post
+
+	In show.blade.php:
+	@extends('layouts.master')
+
+	@section('content')
+	    <div class="col-sm-8 blog-main">
+	        <h1>{{ $post->title }}</h1>
+
+	        {{ $post->body }}
+	        <hr>
+
+	        <div class="comments">
+	            <ul class="list-group">
+	                @foreach($post->comments as $comment)
+	                    <li class="list-group-item">
+	                        {{ $comment->body }}
+	                    </li>
+	                @endforeach
+	            </ul>
+	        </div>
+	    </div>
+	@endsection
+	
+
+
+
+
+
+
+#Inverse Relationship
+
+class Post extends Model
+{
+    //post->comment
+    public function comments()
+    {
+        return $this->hasMany(Comment::class);
+    }
+}
+In Tinker:
+-$c = App\Comment::find(1); // or $c = App\Comment::first();
+-$c->post
+
+

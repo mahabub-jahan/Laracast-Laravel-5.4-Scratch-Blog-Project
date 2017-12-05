@@ -1,0 +1,94 @@
+ #dd():
+ Use for dd
+	 public function store()
+	    {
+	        dd(request()->all());
+	    }
+	Note: It receive data from "Input Form" and assign to array and show the data;
+	another:
+	dd(request('body'));
+	dd(request(['body', 'title']));
+
+
+#Store Function
+	public function store(/*Request $request*/)
+    {
+        //Create a new post using the request data
+        $post = new Post();
+
+        $post->title = request('title');
+        $post->body = request('body');
+
+        //Save it to the database
+        $post->save();
+
+        //And then redirect to the home page.
+        return redirect('/');
+    }
+
+
+    Another:
+    public function store(/*Request $request*/)
+    {
+        Post::create([
+            'title' => request('title'),
+            'body' => request('body')
+        ]);
+
+        //And then redirect to the home page.
+        return redirect('/');
+    }
+    Note:First of all it gives a error name-"Illuminate \ Database \ Eloquent \ MassAssignmentException"
+    -it means that if we not doing any validation or climsing and it allows the user smit any form data whatever they want.
+    -User can always html form in browser and change input or add input
+    -In Model
+    	class Post extends Model
+		{
+		    protected $fillable = ['title', 'body'];
+		}
+		Note: If we give only the field we are basically ok for MassAssign
+
+	-However this $fillable get anoying so we have chooise like $gurded sort of like inverse....
+		-fillable mean we accept but gurded mean we don't allow, it basicaly a filter
+	Example:
+		class Post extends Model
+		{
+		    protected $guarded = [];//this means we do not guardeing anything
+		}
+		Note: this means we don't gurded anything but if we use 
+				class Post extends Model
+				{
+				    protected $guarded = ['user_id'];
+				}
+				it means we don't gurded anything accept 'user_id' 
+
+
+#Create Custom Model and use it 
+
+Model.php:
+<?php
+
+namespace App;
+
+use Illuminate\Database\Eloquent\Model as Eloquent;
+
+class Model extends Eloquent
+{
+    protected $guarded = [];
+}
+
+
+Post.php:
+<?php
+
+namespace App;
+use App;
+
+class Post extends Model
+{
+
+}
+
+Note: Here we create our own Model name Model and in Post.php  we extends our own model and this $gurded works every child Model class and it automatically inherete
+
+

@@ -1,0 +1,62 @@
+# In Model Comment.php
+	class Comment extends Model
+	{
+	    //$comment->post
+	    public function post()
+	    {
+	        return $this->belongsTo(Post::class);
+	    }
+
+
+	    //$comment->user->name
+	    public function user()
+	    {
+	        return $this->belongsTo(Post::class);
+	    }
+
+	    /*Note: given the current comment we have user associate with I can simply do that ("$comment->user") and then if I grab the name that the user who created the comment "$comment->user->name" syntex we use */
+	}
+
+
+#In Model Post.php:
+	class Post extends Model
+	{
+	    //post->comment
+	    public function comments()
+	    {
+	        return $this->hasMany(Comment::class);
+	    }
+
+	    //$post->
+	    public function user()
+	    {
+	        return $this->belongsTo(User::class);
+	    }
+	    /*Note: I will grab the user who created the post($post->user)
+	    or
+	    $comment->post->user That will gives us user name of the person who create the post and the
+	    comment associate with
+	    */
+
+
+
+
+	    public function addComment($body)
+	    {
+	        /*Comment::create([
+	            'body' => $body,
+	            'post_id' => $this->id
+	        ]);*/
+	        //Another Way to represent this
+	        //Becouse of the relationship 'comments' in Eloquent we write
+	        $this->comments()->create(compact('body')/*or ['body'=>$body]*/);
+	    }
+	}
+
+
+#In Model User.php
+	public function posts()
+	    {
+	        return $this->hasMany(Post::class);
+	    }
+	    /*A user can have many post*/

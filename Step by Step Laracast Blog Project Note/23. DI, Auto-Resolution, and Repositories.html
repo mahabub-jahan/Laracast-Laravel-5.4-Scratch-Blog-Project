@@ -1,0 +1,113 @@
+Step 1:
+-We may have a point where we like to take a query and extract them in a dedicatid class, we refered this class as repository.
+-Repository is a container or collection of things
+
+-So we have a class dedicatd to a collection of post. And in bellow in multi command line call collection.
+	public function index()
+    {
+        /*$posts= Post::latest();//we build query one at a time
+
+        if ($month = request('month')){
+            $posts->whereMonth('created_at', Carbon::parse($month)->month); //whereMonth helper function that is exists laravel Builder.php class
+        }
+        if ($year = request('year')){
+            $posts->whereYear('created_at', $year); //whereYear helper function that is exists laravel Builder.php class
+        }
+        $posts= $posts->get();*/
+
+        return view('posts.index',compact('posts'));
+    }
+
+-And this collection can filter them, it can return result, it can add new item to that collection
+
+
+Step 2:
+Now create a Diroctory name Repositiories and class name Posts like
+app/Repositories/Posts.php
+
+<?php
+namespace App\Repositories;
+use App\Post;
+class Posts
+{
+    public function all()
+    {
+        // return all posts
+        return Post::all();
+
+    }
+    public function find()
+    {
+
+    }
+}
+
+Step 3:
+Now goto PostController.php:
+	 public function index()
+    {
+        $posts = (new \App\Repositories\Posts)->all();
+        return view('posts.index',compact('posts'));
+    }
+-So now how do we injected when we are in a coltroller and wd didn't instantiate this PostController on our own, laravel doing for us.
+-Laravel includes automatic dependency in a controller for both constructor and every single action like- index(),create(), store() etc
+
+   public function index(Posts $posts)
+    {
+        dd($posts);
+        $posts = (new \App\Repositories\Posts)->all();
+        return view('posts.index',compact('posts'));
+    }
+    Note: It gives us instance
+	-public function index(Posts $posts)
+    {
+       $posts = $posts->all();
+        return view('posts.index',compact('posts'));
+    } 
+    Note: This is says Auto-Resolution or Automatic-Dependency Injection
+
+
+-Dependency Injection means-
+	# Passing arguments to a function
+	# Construct Injection that is passing arguments into a new object constractor
+	# Method Injection that is passing dependance to a method call
+
+Step 4:
+-Our class app/Repositories/Posts.php need to depend upon another class name Radis
+-Posts.php:
+
+<?php
+namespace App\Repositories;
+use App\Post;
+use App\Redis;
+class Posts
+{
+    protected $redis ;
+    public function __construct(Redis $redis)
+    {
+        $this->redis = $redis;
+    }
+    public function all()
+    {
+        // return all posts
+        return Post::all();
+    }
+} 
+
+
+-app/Redis.php
+<?php
+namespace App;
+
+class Redis
+{
+
+}
+-Now we can access Radis.php and Post.php in our PostController.php
+  public function index(Posts $posts)
+    {
+        dd($posts);
+       $posts = $posts->all();
+        return view('posts.index',compact('posts'));
+    }
+-We can get Posts instance and Redis instance also

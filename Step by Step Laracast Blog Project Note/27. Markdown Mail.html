@@ -1,0 +1,61 @@
+Step 1:
+-In previous Episode it's very cool. But now this time we want to Formatting some out of the box
+-So goto command and type: 'php artisan make:mail WelcomeAgain --markdown="emails.welcome-again"'
+	-It will create two file
+		-app/Mail/WelcomeAgain.php
+		-resources/views/emails/welcome-again.blade.php
+
+Step 2:
+resources/views/emails/welcome-again.blade.php
+
+@component('mail::message')
+# Introduction
+
+@component('mail::message')
+# Introduction
+
+The body of your message.
+
+- One
+- Two
+- Three
+
+@component('mail::button', ['url' => ''])
+Button Text
+@endcomponent
+
+@component('mail::panel', ['url' => ''])
+Hello, {{ $user->name }}. Thank you to register our Website
+@endcomponent
+
+Thanks,<br>
+{{ config('app.name') }}
+@endcomponent
+Note: -It has @component('mail::panel', ['url' => '']),@component('mail::button', ['url' => '']),@component('mail::table')
+
+
+
+Step 3: 
+Goto tinker
+command: Mail::to($user = App\User::first())->send(new App\Mail\WelcomeAgain($user));
+
+Step 4:
+-To change our app name goto config/app.php
+	-'name' => env('APP_NAME', 'Laravel'), to 'name' => env('', 'Blog'),
+-Or goto .env file 
+	-APP_NAME=Laravel to APP_NAME=Blog
+
+Step 5:
+-In step 2, it's a build in. Now we have to need customize this thing.
+-For that goto command: "php artisan vendor:publish --tag=laravel-mail"
+-It will automatically generate  a directory name "resources/views/vendor/mail"
+
+Step 6:
+-To customly change. For example 
+	-default.css to blog.css now we have to update our theme
+	-thats why we have to goto app/config/mail.php
+		'theme' => 'default'
+
+
+
+

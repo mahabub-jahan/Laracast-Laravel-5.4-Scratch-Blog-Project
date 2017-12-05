@@ -1,0 +1,11 @@
+Root:
+Route::get('/tasks/{task}','TaskController@show');
+
+Controller:
+ public function show(Task $task)
+    {
+        return view('tasks.show',compact('task'));
+    }
+Note: '/tasks/{task}'- When register a route wildcard({task}) that name matches variable name in controller "show(Task $task)"
+
+this thing call route model binding

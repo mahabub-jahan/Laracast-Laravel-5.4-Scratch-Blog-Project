@@ -1,0 +1,176 @@
+Step 1:
+-First got to phpmyadmin build a query for Archive
+"SELECT year(created_at) year,
+monthname(created_at) month,
+COUNT(*) published
+FROM posts
+GROUP by year, month"
+
+Step 2: 
+-Goto Tinker to get value
+	-"App\Post::selectRaw('year(created_at) year, monthname(created_at) month, count(*)published')->groupBy('year','month')->get();"
+
+	-"App\Post::selectRaw('year(created_at) year, monthname(created_at) month, count(*)published')->groupBy('year','month')->get()->toArray();"
+
+
+Step 3:
+PostController.php:
+public function __construct()
+    {
+        $this->middleware('auth')->except(['index','show']);
+    }
+
+
+    public function index()
+    {
+        $posts= Post::orderBy('created_at', 'desc')->get();
+
+        $archives = Post::selectRaw('year(created_at) year, monthname(created_at) month, count(*) published')
+            ->groupBy('year','month')
+            ->get()
+            ->toArray();
+        return view('posts.index',compact('posts','archives'));
+    }
+
+Step 5:
+sidebar.blade.php:
+<aside class="col-sm-3 ml-sm-auto blog-sidebar">
+    <div class="sidebar-module sidebar-module-inset">
+        <h4>About</h4>
+        <p>Etiam porta <em>sem malesuada magna</em> mollis euismod. Cras mattis consectetur purus sit amet fermentum. Aenean lacinia bibendum nulla sed consectetur.</p>
+    </div>
+    <div class="sidebar-module">
+        <h4>Archives</h4>
+        <ol class="list-unstyled">
+
+            @foreach($archives as $states)
+
+            <li>
+                <a href="#">{{ $states['month'] }}</a>
+            </li>
+
+            @endforeach
+
+        </ol>
+    </div>
+    <div class="sidebar-module">
+        <h4>Elsewhere</h4>
+        <ol class="list-unstyled">
+            <li><a href="#">GitHub</a></li>
+            <li><a href="#">Twitter</a></li>
+            <li><a href="#">Facebook</a></li>
+        </ol>
+    </div>
+</aside><!-- /.blog-sidebar -->
+
+
+
+
+
+
+Step 6:
+Updated SQL:
+SELECT year(created_at) year,
+monthname(created_at) month,
+COUNT(*) published
+FROM posts
+GROUP by year, month
+ORDER BY MIN(created_at) DESC
+
+
+Step 7:
+Updated PostController.php:
+ $archives = Post::selectRaw('year(created_at) year, monthname(created_at) month, count(*) published')
+    ->groupBy('year','month')
+    ->get('min(created_at) desc')
+    ->toArray();
+
+
+Step 8:
+nav.blade.php:
+ 	<div class="sidebar-module">
+        <h4>Archives</h4>
+        <ol class="list-unstyled">
+            @foreach($archives as $states)
+            <li>
+                <a href="/?month={{ $states['month'] }}&year={{ $states['year'] }}">{{ $states['month'] . ' ' . $states['year'] }}</a>
+            </li>
+            @endforeach
+        </ol>
+    </div>
+    NOte: here " <a href="/?month={{ $states['month'] }}&year={{ $states['year'] }}">{{ " it link to the home page(href="/?month") and it pass  through the query string
+
+
+Setp 9:
+PostController.php:
+
+use Carbon\Carbon;
+ public function index()
+    {
+        $posts= Post::latest();//we build query one at a time
+
+        if ($month = request('month')){
+            $posts->whereMonth('created_at', Carbon::parse($month)->month); //whereMonth helper function that is exists laravel Builder.php class
+        }
+        /*
+         * Note: note that "$posts->whereMonth" helper function not expected month
+         * it expected month number. So we need to convert March => 3, May => 6
+         * For that we can use php sticktime or use Carbon
+         * */
+        if ($year = request('year')){
+            $posts->whereYear('created_at', $year); //whereYear helper function that is exists laravel Builder.php class
+        }
+
+        $posts= $posts->get();
+
+        $archives = Post::selectRaw('year(created_at) year, monthname(created_at) month, count(*) published')
+            ->groupBy('year','month')
+            ->orderByRaw('min(created_at) desc')
+            ->get()
+            ->toArray();
+        return view('posts.index',compact('posts','archives'));
+    }
+
+Step 10:
+How carbon work in tinker:
+-Carbon\Carbon::parse('may')
+
+-Carbon\Carbon::parse('may')->month
+-Carbon\Carbon::parse('may')->year
+-Carbon\Carbon::parse('may')->day
+
+
+
+Step 11:
+We can do setp-9 same thing another way
+PostsController.php:
+ 	public function index()
+    {
+
+        $posts = Post::latest()
+            ->filter(request(['month','year']))
+            ->get();
+        $archives = Post::selectRaw('year(created_at) year, monthname(created_at) month, count(*) published')
+            ->groupBy('year','month')
+            ->orderByRaw('min(created_at) desc')
+            ->get()
+            ->toArray();
+        return view('posts.index',compact('posts','archives'));
+    }
+
+
+Then goto App/Post.php:
+    public function scopeFilter($query, $filters)
+    {
+
+
+        if ($month = $filters['month']){
+            $query->whereMonth('created_at', Carbon::parse($month)->month); //whereMonth helper function that is exists laravel Builder.php class
+        }
+
+        if ($year = $filters['year']){
+            $query->whereYear('created_at', $year); //whereYear helper function that is exists laravel Builder.php class
+        }
+
+        
+    }

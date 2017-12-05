@@ -1,0 +1,30 @@
+Step 1: 
+-Web.php
+
+App::singleton('App\Billing\Stripe', function (){
+ return new \App\Billing\Stripe(config('services.stripe.secret'));
+});
+dd(resolve('App\Billing\Stripe'));
+Note: dd(resolve('App\Billing\Stripe')); give us key when we write "php artisna serve"
+
+Step 2: 
+-we don't put this singleton in web file, we through it into service provider
+-app/Providers/AppServiceProvider.php
+	public function register()
+    {
+            $this->app->singleton(Stripe::class, function (){
+                    return new Stripe(config('services.stripe.secret'));
+                /*
+                 * or use \App::singleton('App\Billing\Stripe', function (){
+                 * return new \App\Billing\Stripe(config('services.stripe.secret'));
+                 * });
+                 *
+                 * or use use \App\Billing\Stripe;
+                 *  $this->app->singleton(Stripe::class, function (){
+                    return new Stripe(config('services.stripe.secret'));
+                 *
+                 *
+                 * */
+        });
+    }
+    Note: 

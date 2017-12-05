@@ -1,0 +1,308 @@
+Setp 1:
+ In route web.php
+ //Auth
+Route::get('/register','RegistrationController@create');
+Route::get('/login','SessionsController@create');
+
+
+Step 2:
+Create controller RegistrationController and SessionsController
+
+Step 3:
+RegistrationController.php
+	public function create()
+    {
+        return view('sessions.create');
+    }
+Then create a views/sessions/create.blade.php its a registration form
+<form method="POST" action="/register">
+    {{ csrf_field() }}
+    <div class="form-group">
+        <label for="name">Name:</label>
+        <input type="text" class="form-control" id="name" name="name">
+    </div>
+
+    <div class="form-group">
+        <label for="email">Email:</label>
+        <input type="email" class="form-control" id="email" name="email">
+    </div>
+
+    <div class="form-group">
+        <label for="password">Password:</label>
+        <input type="text" class="form-control" id="password" name="password">
+    </div>
+
+
+    <div class="form-group">
+        <button type="submit" class="btn btn-primary">Register</button>
+    </div>
+</form>
+
+-In Web.php: "Route::post('/register','RegistrationController@store');"
+-In RegisterController.php:
+public function store()
+    {
+        // Validate the form
+        $this->validate(request(),[
+            'name' => 'required',
+            'email' => 'required|email',
+            'password' => 'required',
+        ]);
+
+
+        // Create and save the user
+        $user = User::create(request(['name', 'email', 'password']));
+
+
+        // Sign them in.
+        /*
+         * We can use multiple thing like
+         * -\Auth::login();
+         * -we can use auth() helper function
+         * -we can use "request->input" helper function Note: use the helper function sometime
+         * nice because we don't have to import the class For example:
+         * -"\Request::input" or
+         * "use Request" call to the top then write Request::input
+         */
+        auth()->login($user);
+
+
+        // Redirect to the home page.
+        return redirect()->home();
+
+        /*
+         * Note: "return redirect()->home;" to call home we have to define it web.php "Route::get('/', 'PostsController@index')->name('home');"
+         * or  return redirect('/');
+         * or return back();
+        */
+    }
+
+Step 4:
+-In Web.php
+Route::get('/logout','SessionsController@destroy');
+-In SessionController.php
+public function destroy()
+{
+    auth()->logout();
+
+    return redirect()->home();
+}
+
+
+Step 5:
+Password Confirmation
+-In views/sessions/create.php the form be like:
+	 <div class="form-group">
+	    <label for="password">Password:</label>
+	    <input type="password" class="form-control" id="password" name="password">
+	</div>
+
+	<div class="form-group">
+	    <label for="password_confirmation">Password Confirmation:</label>
+	    <input type="password" class="form-control" id="password_confirmation" name="password_confirmation">
+	</div>
+
+
+	<div class="form-group">
+	    <button type="submit" class="btn btn-primary">Register</button>
+	</div>
+
+	@include('layouts.errors')
+</form>
+Note: here "<input type="password" name="password_confirmation">" we must type name="password_confirmation" because
+	-In RegistrationController.php
+		 public function store()
+    	{
+        // Validate the form
+        $this->validate(request(),[
+            'name' => 'required',
+            'email' => 'required|email',
+            'password' => 'required|confirmed',
+        ]);
+
+        SubNote: when we add "'password' => 'required|confirmed'" we are instraction laravel validator to make sure that be request field for password also matches up request field password_confirmation
+
+Step 6:
+-Goto views/layouts/nav.blade.php
+
+@if(Auth::check())
+    <a class="nav-link ml-auto" href="#">{{ Auth::user()->name }}</a>
+@endif
+
+Step 7:
+I don't want to see my posts/create page to everyone except for Register user
+-PostsController.php
+
+    public function __construct()
+    {
+        $this->middleware('auth')->except(['index','show']);
+    }
+
+    Note: this construct says that gusts can visit all page except index and show page
+
+
+Step 7:
+-Now if we want to create a post it gives us an error becouse we do not pass "user_id"
+-In PostsController.php
+public function store(/*Request $request*/)
+    {
+        $this->validate(request(),[
+            'title' => 'required',
+            'body' => 'required'
+        ]);
+        Post::create([
+            'title' => request('title'),
+            'body' => request('body'),
+            'user_id' => auth()->id() 
+            /*
+             * 'user_id' => auth()->user()->id or
+             * 'user_id' => auth()->id() it's a helper function
+             *
+             */
+        ]);
+
+        //And then redirect to the home page.
+        return redirect('/');
+    }
+
+-Now show auth name in date field goto views/posts/post.blade.php
+<div class="blog-post">
+    <h2 class="blog-post-title">
+        <a href="/posts/{{ $post->id }}">
+            {{ $post->title }}
+        </a>
+    </h2>
+    <p class="blog-post-meta">
+        {{ $post->user->name }} on 
+        {{ $post->created_at->toFormattedDateString() }}
+    </p>
+    <p>{{ $post->body }}</p>
+</div><!-- /.blog-post -->  
+
+Step 8:
+-Step 7 work fine but Another way to store post in controller. 
+-In PostsController.php
+	public function store(/*Request $request*/)
+    {
+        $this->validate(request(),[
+            'title' => 'required',
+            'body' => 'required'
+        ]);
+
+        auth()->user()->publish(
+            new Post(request(['title','body']))
+        );
+        
+        //And then redirect to the home page.
+        return redirect('/');
+    }
+    Note: we wana give user to an option publish a new post
+-In App/User.php
+ public function publish($post)
+    {
+       /* Post::create([
+            'title' => request('title'),
+            'body' => request('body'),
+            'user_id' => auth()->id()
+        ]);
+       Note: we an use this that but we have a relationship hasMany so simply we say
+
+       */
+
+       $this->posts()->save(Post $post);
+
+    }
+    Note: If I have choose create([]) I can give a array of pram. However I have a existence instance of the relation the I can use to say save the model we have "save(Post $post)"
+    -We reference the relationship it will automaticlly set "user_id" for us
+
+Step 9:
+-Cut the content in views/sessions/create.blade.php to views/registration/create.blade.php 
+-And goto RegistrationController.php and update that
+	 public function create()
+    {
+        return view('registration.create');
+    }
+
+
+Step 10:
+Create a Login form
+
+-SessionsController.php
+	public function create()
+    {
+        return view('sessions.create');
+    }
+-Route::get('/login','SessionsController@create');
+-views/sessions/create.blade.php
+	@extends('layouts.master')
+	@section('content')
+	    <div class="col-md-8">
+	        <h1>Sign In</h1>
+	        <form method="POST" action="/login">
+	            {{ csrf_field() }}
+	            <div class="form-group">
+	                <label for="email">Email:</label>
+	                <input type="email" class="form-control" id="email" name="email" required>
+	            </div>
+
+	            <div class="form-group">
+	                <label for="password">Password:</label>
+	                <input type="password" class="form-control" id="password" name="password" required>
+	            </div>
+
+
+	            <div class="form-group">
+	                <button type="submit" class="btn btn-primary">Sign In</button>
+	            </div>
+
+	            @include('layouts.errors')
+	        </form>
+	    </div>
+	@endsection
+
+-This form gives us information which will go to store and	check this email and password match in database or not.
+	-What store funtion do in SessionController.php 
+	public function store()
+    {
+        // Attempt to authenticate the user.
+
+        // If not, redirect back
+
+        // If so, sign them in.
+
+
+        // Redirect to the home page.
+
+        
+    }
+
+    -Main store function
+    public function store()
+    {
+        // Attempt to authenticate the user.
+        if(!auth()->attempt(request(['email', 'password']))) {
+           return back();
+        }
+        /*
+         * The attempt method takes care all the logic related
+         * to comparing this cridential against what we have store in database,
+         * if they match they will automatically sign the user in
+         *
+         * */
+
+        // Redirect to the home page.
+        return redirect()->home();
+    }
+    VERY IMPORTANT ROLE: "auth()->attempt(" not working if password are not set in bcrypt.........
+
+
+
+Step 11:
+-we can't show our login page to register user so
+-SessionsController.php
+	public function __construct()
+    {
+        $this->middleware('guest',['except' => 'destroy']);
+    }
+
+

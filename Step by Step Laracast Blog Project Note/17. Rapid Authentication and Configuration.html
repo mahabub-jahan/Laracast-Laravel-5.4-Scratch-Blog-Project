@@ -1,0 +1,167 @@
+Step 1:
+	run this command "php artisan make:auth"
+	If we go to the web.php we can see "Auth::routes();" which responsable for login, signin, password reset etc.
+
+Step 2: If we see the .env file we can connect database many ways
+	In .env file  we can connect "DB_CONNECTION=sqlite" and 
+		"DB_HOST=127.0.0.1
+		DB_PORT=3306
+		DB_DATABASE=homestead
+		DB_USERNAME=homestead
+		DB_PASSWORD=secret"
+
+	 file must be deleted  and the sqlite which is file base database
+	In config/database.php we can see many database connection like sqlite,mysql,pgsql..etc
+	we can change it.
+	In config/database.php
+		'connections' => [
+
+        'sqlite' => [
+            'driver' => 'sqlite',
+            'database' => env('DB_DATABASE', database_path('database.sqlite')),
+            'prefix' => '',
+        ],
+
+        Note: here "database.sqlite" means we have to create a file in database/sqlite
+
+Step 3:
+	Then create a file name database/database.sqlite or 
+	we can use this command "touch database/database.sqlite"
+
+Step 4:	
+	then "php artisan migrate"
+	it can migrate user and password table
+
+Step 5:
+	If we goto the "http://127.0.0.1:8000/" in web browser we can see two new section LOGIN and PASSWORD becouse we run command "php artisan make:auth"
+
+Step 6:
+	 If we goto HomeController.php we can see constructor like 
+	  	-public function __construct()
+	    {
+	       $this->middleware('auth');
+	    }
+	    Note1: this function says every action that on this controller need to pipe through the auth middleware
+	    Note2: check what middleware? in laravel.com
+
+	    -public function __construct()
+	    {
+	       $this->middleware('auth',['only' => 'index']);
+	       //$this->middleware('auth',['except' => 'index']);
+	    }
+	    Note3: we can say the middleware auth will apply only for 'index' page
+	    or
+	    	we can say the middleware auth will apply acept for 'index' page
+
+
+
+
+
+
+
+Step 7:
+	Then goto App/Http/Middleware/Kernel.php we can see
+
+	#$middleware
+	//* These middleware are run during every request to your application.
+	 protected $middleware = [
+        \Illuminate\Foundation\Http\Middleware\CheckForMaintenanceMode::class,
+        \Illuminate\Foundation\Http\Middleware\ValidatePostSize::class,
+        \App\Http\Middleware\TrimStrings::class,
+        \Illuminate\Foundation\Http\Middleware\ConvertEmptyStringsToNull::class,
+        \App\Http\Middleware\TrustProxies::class,
+    ];
+
+
+	    -\Illuminate\Foundation\Http\Middleware\CheckForMaintenanceMode::class,
+		   	Then goto CheckForMaintenanceMode.php file and can see
+		     public function handle($request, Closure $next)
+		    {
+		        if ($this->app->isDownForMaintenance()) {
+		            $data = json_decode(file_get_contents($this->app->storagePath().'/framework/down'), true);
+
+		            throw new MaintenanceModeException($data['time'], $data['retry'], $data['message']);
+		        }
+
+		        return $next($request);
+		    }
+		    Note: this isDownForMaintenance means 
+		    	-if we run a command "php artisan down"
+		    	and try to access browse our website it can show an message 
+		    	like - "Be right back."
+
+		    	-If we want to live again run this command
+		    		"php artisan up"
+
+
+	#$routeMiddleware
+	protected $routeMiddleware = [
+    'auth' => \Illuminate\Auth\Middleware\Authenticate::class,
+    'auth.basic' => \Illuminate\Auth\Middleware\AuthenticateWithBasicAuth::class,
+    'bindings' => \Illuminate\Routing\Middleware\SubstituteBindings::class,
+    'can' => \Illuminate\Auth\Middleware\Authorize::class,
+    'guest' => \App\Http\Middleware\RedirectIfAuthenticated::class,
+    'throttle' => \Illuminate\Routing\Middleware\ThrottleRequests::class,
+	];
+		-'auth' => \Illuminate\Auth\Middleware\Authenticate::class,
+			A particular route should only be available your subscriber. If you are not singin or login you can not access this page
+
+		-'can' => \Illuminate\Auth\Middleware\Authorize::class,
+			It dose the user has permission, it dose the user has roll perform this action
+
+		-'guest' => \App\Http\Middleware\RedirectIfAuthenticated::class,
+			guest is opposite in auth. Certain pages you can see them as a guest like signup page
+
+Step 8:
+goto App/Http/Controllers/Auth/RegisterController.php
+and see how register controller work
+
+Step 9:
+-It we reset password it will send me a mail....but this time I can not setup  mail so that why goto .env file
+
+	MAIL_DRIVER=smtp
+	MAIL_HOST=smtp.mailtrap.io
+	MAIL_PORT=2525
+	MAIL_USERNAME=null
+	MAIL_PASSWORD=null
+	MAIL_ENCRYPTION=null
+	Note: check a mail_driver  supported in laravel for that got to config/mail.php
+		 /*
+	    |--------------------------------------------------------------------------
+	    | Mail Driver
+	    |--------------------------------------------------------------------------
+	    |
+	    | Laravel supports both SMTP and PHP's "mail" function as drivers for the
+	    | sending of e-mail. You may specify which one you're using throughout
+	    | your application here. By default, Laravel is setup for SMTP mail.
+	    |
+	    | Supported: "smtp", "sendmail", "mailgun", "mandrill", "ses",
+	    |            "sparkpost", "log", "array"
+	    |
+	    */
+
+	    'driver' => env('MAIL_DRIVER', 'smtp'),
+
+
+	-In this time we use 'log' mail like
+		MAIL_DRIVER=log
+		MAIL_HOST=mailtrap.io
+		MAIL_PORT=2525
+		MAIL_USERNAME=null
+		MAIL_PASSWORD=null
+		MAIL_ENCRYPTION=null
+
+	-Then goto browser and click forget password
+	-A link given in stroge/logs/laravel.log
+	-Copy this link and reset password
+		link like-"http://localhost/password/reset/4a6992287b740eec751aa1dc48590f46206ef7570c824cb6502c84373f1f066e"
+		Note: it not gona work so try this-
+			http://127.0.0.1:8000/password/reset/4a6992287b740eec751aa1dc48590f46206ef7570c824cb6502c84373f1f066e
+
+
+	
+
+
+
+
+

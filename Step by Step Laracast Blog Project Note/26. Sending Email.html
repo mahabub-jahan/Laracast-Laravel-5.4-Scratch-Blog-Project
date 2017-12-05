@@ -1,0 +1,149 @@
+Step 1:
+-This time we want to send a Welcome Email in user when they register. So goto RegistrationController.php and store() function-
+
+\Mail::to($user)->send(new Welcome);
+
+	-Import mail featured \Mail
+	-to($user) that will fetch the email address
+	- ->(new Welcome()) and send a Email by creating a Welcome Email class. Goto command line "php artisan make:mail Welcome" and also "use App\Mail\Welcome;" to import that.
+
+Step 2:
+Now goto app/Mail/Welcom.php
+
+<?php
+namespace App\Mail;
+
+use Illuminate\Bus\Queueable;
+use Illuminate\Mail\Mailable;
+use Illuminate\Queue\SerializesModels;
+use Illuminate\Contracts\Queue\ShouldQueue;
+
+class Welcome extends Mailable
+{
+    use Queueable, SerializesModels;
+   
+    public function __construct()
+    {
+    }
+
+    public function build()
+    {
+        return $this->view('emails.welcome');
+    }
+}
+Note: this "return $this->view('emails.welcome');" where we reference the view email to show the user.
+
+Step 3:
+Now create a file "resources/views/emails/welcome.blade.php"
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title></title>
+</head>
+<body>
+    <h1>Welcome to our Blog</h1>
+</body>
+</html>
+Note: this page will show in the mail which we want to send
+
+Step 4:
+goto .env file and configure it using "https://mailtrap.io" website
+MAIL_DRIVER=smtp
+MAIL_HOST=smtp.mailtrap.io
+MAIL_PORT=2525
+MAIL_USERNAME=24babd41375596
+MAIL_PASSWORD=a9924526f4dfc4
+MAIL_ENCRYPTION=null
+-Now goto /register a new user. We can see an email will send. Check in "https://mailtrap.io" 
+
+
+Step 5:
+-In "https://mailtrap.io" you can see the email comes Form "From:	Example <hello@example.com>"
+-To change this goto config/Mail.php
+'from' => [
+        'address' => env('MAIL_FROM_ADDRESS', 'hello@example.com'),
+        'name' => env('MAIL_FROM_NAME', 'Example'),
+    ],
+
+-Change it to
+
+'from' => [
+        'address' => env('MAIL_FROM_ADDRESS', 'mahabubjahanofficial@gmail.com'),
+        'name' => env('MAIL_FROM_NAME', 'Blog'),
+    ],
+
+Step 6:
+-Now we want to show the Username in the sending mail. To do that first goto RegistrationController.php
+public function store()
+    {
+      
+        $this->validate(request(),[
+            'name' => 'required',
+            'email' => 'required|email',
+            'password' => 'required|confirmed',
+        ]);
+    
+        $user = User::create(
+            request(['name', 'email', 'password'])
+        );
+
+        auth()->login($user);
+
+        //Send an Email
+        \Mail::to($user)->send(new Welcome($user));
+
+        return redirect('/');
+    }
+    Note: send $user as a construction "\Mail::to($user)->send(new Welcome($user));"
+
+  
+-Goto App/Mail/Welcome.php
+
+<?php
+
+namespace App\Mail;
+use App\User; //Import User Model to send name for the user in Email
+
+use Illuminate\Bus\Queueable;
+use Illuminate\Mail\Mailable;
+use Illuminate\Queue\SerializesModels;
+use Illuminate\Contracts\Queue\ShouldQueue;
+
+class Welcome extends Mailable
+{
+    use Queueable, SerializesModels;
+
+    public $user;
+    public function __construct(User $user)
+    {
+        $this->user = $user;
+    }
+
+    public function build()
+    {
+        return $this->view('emails.welcome');
+    }
+}
+Note: username is available for views/emails/welcome.blade.php
+
+
+Step 7:
+-Now goto views/emails/welcome.blade.php
+
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title></title>
+</head>
+<body>
+    <h1>Welcome to our Blog, {{ $user->name }}</h1>
+</body>
+</html>

@@ -1,0 +1,56 @@
+Step 1:
+Laraval provide App feture, where we can bind into the scrivce container the dependance injection container, like
+
+View => view() //this is a compainer helper function
+Requenst => request()
+App => app()
+
+we can call those function anywhere
+
+
+Step 2:
+-I we want to bind into the container we can reference any class path
+
+-App::bind('App\Billing\Stripe')
+
+-App\Billing\Stripe class and with it's constructor, it has an argument that laravel can magically figureout through reflection. Maybe we can give it's a API key
+
+-Goto app/config/services.php and goto stripe and maybe I want to grub my secret key
+
+
+Step 3:
+In web.php route file
+
+App::bind('App\Billing\Stripe', function (){//we bind into the container
+ return new \App\Billing\Stripe(config('services.stripe.secret'));// return a new instance of a strip class passing through a secret key
+});
+
+$stripe = App::make('App\Billing\Stripe'); // we resolve the Stripe instance out of the container
+
+dd($stripe); // and we dump to the page
+
+
+Step 4:
+-In step-3 we can't get any secret key 
+-Goto .env file, here we store secret key, that is not a part of a version control "STRIPE_SECRET = 3213213SDF3132"
+-Goto browser we can show the secret key
+
+Step 5:
+-Or we can use singleton it gives us same result
+Web.php
+
+App::singleton('App\Billing\Stripe', function (){
+ return new \App\Billing\Stripe(config('services.stripe.secret'));
+});
+
+$stripe = App::make('App\Billing\Stripe');
+
+dd($stripe);
+
+
+Step 6:
+Create a service provider
+-First goto app.php register your class
+	-App\Provider\SocialMediaServiceProvider::class
+-Or generate a service provider command-php artisan make:provider SocialMediaSecviceProvider
+	-The goto app/Providers/SocialMediaSecviceProvider

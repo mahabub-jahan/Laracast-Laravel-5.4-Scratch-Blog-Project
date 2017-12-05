@@ -1,0 +1,83 @@
+Step 1:
+ -First we give our Table structure
+ 	-posts
+ 	-tags
+ 	-post_tag
+
+Step 2: 
+command: php artisan make:model Tag -m
+
+Step 3:
+-Go to create_tags_table.php
+
+<?php
+use  Illuminate\Support\Facades\Schema;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Database\Migrations\Migration;
+
+class CreateTagsTable extends Migration
+{
+    public function up()
+    {
+        Schema::create('tags', function (Blueprint $table) {
+            $table->increments('id');
+            $table->string('name',100)->unique();
+            $table->timestamps();
+        });
+
+        Schema::create('post_tag', function (Blueprint $table) {
+            $table->integer('post_id');
+            $table->integer('tag_id');
+            $table->primary(['post_id','tag_id']);
+
+        });
+    }
+    public function down()
+    {
+        Schema::dropIfExists('tags');
+        Schema::dropIfExists('post_tag');
+    }
+}
+-Here post_tag is fabe table
+
+Step 4:
+-Now insert some data in database
+-Now goto App/Post.php model
+
+	public function tags(){
+        // Any post may have many tags
+        // Any tag may be applied to many posts
+        return $this->belongsToMany(Tag::class);
+    }
+
+    Note: goto tinker
+    	-$post = App\Post::find(1);
+    		-$post->tags;
+    		-$post->tags->pluck('name');
+Step 5:
+-For reverse relationship go to App/Tag.php
+	public function posts(){
+        // Any post may have many tags
+        // Any tag may be applied to many posts
+        return $this->belongsToMany(Post::class);
+    }
+
+    Note:goto tinker
+    	-$tag = App\Tag::first();
+    		-$tag->posts;
+
+
+Step 6:
+-To get all the data at once and it's name N+1 query
+-goto tinker
+	-App\Post::with('tags')->get();
+Step 7:
+-We don't want to insert data menually. To dynamicly insert data goto tinker
+	-$post = App\Post::first();
+		I want to associate this $post to $tag which in bellow
+	-$tag = App\Tag::where('name','personal')->first();
+	-$post->tags()->attach($tag); //Here we don't say $post->tags()->save($tag); because in many to many we don't say save we have to say attache
+	-$post->tags()->detach($tag); //Here detach method we can remove post_tag row
+
+
+

@@ -1,0 +1,76 @@
+#Comment Form
+	<div class="card">
+		<div class="card-body">
+		    <form method="POST" action="/posts/{{ $post->id }}/comments">
+		        {{csrf_field()}}
+		        <div class="form-group">
+		            <textarea name="body" placeholder="Your comment here." class="form-control"></textarea>
+		        </div>
+
+		        <div class="form-group">
+		            <button type="submit" class="btn btn-primary">Add Comment</button>
+		        </div>
+		    </form>
+		</div>
+	</div>
+	Note: In form if the method should ever be 'PATCT' or "DELETE" low browser should not
+
+
+
+
+#Route:
+Route::post('/posts/{post}/comments', 'CommentsController@store');
+
+#Now create a CommentsController
+	<?php
+
+	namespace App\Http\Controllers;
+
+	use App\Post;
+	use App\Comment;
+
+	use Illuminate\Http\Request;
+
+	class CommentsController extends Controller
+	{
+	    public function store(Post $post){
+	    	//Add a comment to a post
+	        Comment::create([
+	            'body' =>request('body'),
+	            'post_id' => $post->id
+	        ]);
+	        return back();
+	    }
+	}
+	Note: here "back()" redirect to current page
+
+	#######Another way to add a comment to a post#######
+	-In CommentsController.php:
+		 public function store(Post $post){
+	    	 $post->addComment(request('body'));
+	        return back();
+		}
+
+	-In Model Post.php:
+		public function addComment($body)
+	    {
+	        Comment::create([
+	            'body' => $body,
+	            'post_id' => $this->id 
+	        ]);
+	    }
+	Note:-Another Way to represent this
+        -Becouse of the relationship 'comments' in Eloquent we write
+        public function addComment($body)
+	    {
+	        $this->comments()->create(compact('body')/*or ['body'=>$body]*/);
+	    }
+
+	    Note: Analysis this line 
+	    #$this->comments()->create(compact('body')/*or ['body'=>$body]*/);
+	    -$this->comments()//that will return to us collection of all comments associate with post
+	    -$this->comments()->create// We trigger as a method, now we give it a body "(compact('body'))", behind the sceen it will also set the id of the post on a new comment
+
+
+
+

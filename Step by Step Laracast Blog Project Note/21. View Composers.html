@@ -1,0 +1,117 @@
+
+laraval.com-Service Provider
+
+Step 1: 
+There has a problem in the previes episode we declear Archives variable in nav and it's include all the page sothat we can't access view post, login, create post anything. That's why we have to declear Archives variable in every function like-
+ -If we want to view a post
+ 	public function show(Post $post)
+    {
+        $archives = Post::selectRaw('year(created_at) year, monthname(created_at) month, count(*) published')
+            ->groupBy('year' , 'month')
+            ->orderByRaw('min(created_at) desc')
+            ->get()
+            ->toArray();
+        return view('posts.show',compact('post','archives'));
+    }
+
+
+Step 2:
+So That's why we want to load Archives everywhere
+
+Step 3:
+-PostController.php:
+ public function index()
+    {
+
+        $posts = Post::latest()
+            ->filter(request(['month','year']))
+            ->get();
+        $archives = Post::archives(); //call a method name archives. Which in Post Model
+
+        return view('posts.index',compact('posts','archives'));
+    }
+
+-Model Posts.php
+public static function archives()
+    {
+        return static::selectRaw('year(created_at) year, monthname(created_at) month, count(*) published')
+            ->groupBy('year' , 'month')
+            ->orderByRaw('min(created_at) desc')
+            ->get()
+            ->toArray();
+    }
+
+
+
+Step 5:
+I can't solve problem undefine index month so I use this code
+	public function index()
+    {
+        $posts= Post::latest();//we build query one at a time
+
+        if ($month = request('month')){
+            $posts->whereMonth('created_at', Carbon::parse($month)->month); //whereMonth helper function that is exists laravel Builder.php class
+        }
+        if ($year = request('year')){
+            $posts->whereYear('created_at', $year); //whereYear helper function that is exists laravel Builder.php class
+        }
+        $posts= $posts->get();
+        
+
+
+        $archives = Post::archives();
+        return view('posts.index',compact('posts','archives'));
+    }
+    Note: I can't use Post.php "public function scopeFilter($query, $filters)"
+
+Step 6: 
+Now out of Archive in the index function in PostsController.php. Becouse I want to available it everywhere
+  public function index()
+    {
+        $posts= Post::latest();//we build query one at a time
+
+        if ($month = request('month')){
+            $posts->whereMonth('created_at', Carbon::parse($month)->month); //whereMonth helper function that is exists laravel Builder.php class
+        }
+        if ($year = request('year')){
+            $posts->whereYear('created_at', $year); //whereYear helper function that is exists laravel Builder.php class
+        }
+        $posts= $posts->get();
+        
+
+
+       
+        return view('posts.index',compact('posts'));
+    }
+
+Step 7:
+-We going to place this archives to "SERVICE PROVIDER" 
+-Goto App/Providers/
+-Here AppServiceProvider.php have two function
+
+	*public function boot()
+    {
+      
+    }
+
+	-*This is place that we can perform any action or logic with the assumtion that fermwork is fully loaded
+
+	**public function boot()
+    {
+       view()->composer();
+       });
+    }
+	-**The way of view()->composer() function is we are hook into when any view is loaded. Thing like a callback. 
+	-**If we are going to master.blde.php we can see "@include ('layout.sidebar')" every page. So that's why view()->composer() is for
+
+
+	***public function boot()
+    {
+       view()->composer('layouts.sidebar',function($view){
+           $view->with('archives', \App\Post::archives());
+       }); //or ue can use \View::
+    }
+    -***When the "view()->composer('layouts.sidebar')" layouts.sidebar is loded then I want to register callback function "view()->composer('layouts.sidebar', function($view))" where we can bind anything that $view.
+    -*** Here we are passing  a closer or we can also pass a "class path" 
+    -***"$view->with('archives', \App\Post::archives());" look very caryfully. It exack same thing root path like
+    	-return view('posts.index')->with('posts',$posts);

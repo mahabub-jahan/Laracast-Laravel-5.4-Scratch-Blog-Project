@@ -1,0 +1,41 @@
+#One way:
+     PostsController.php:
+     public function store(/*Request $request*/)
+        {
+            $this->validate(request(),[
+                'title' => 'required',
+                'body' => 'required'
+            ]);
+            Post::create([
+                'title' => request('title'),
+                'body' => request('body')
+            ]);
+
+            //And then redirect to the home page.
+            return redirect('/');
+        }
+
+
+      create.blade.php:
+      
+      <div class="form-group">
+        @if(count($errors))
+            <div class="alert alert-danger">
+                <ul>
+                    @foreach($errors->all() as $error)
+                        <li>{{ $error }}</li>
+                    @endforeach
+                </ul>
+            </div>
+        @endif
+    </div>
+
+
+#Other Way:
+or create a error.blade.php and assign error message and include it like-
+
+<div class='form-group'>
+    <button type="submit" class="btn btn-primary">Publish</button>
+</div>
+ @include('layouts.errors')
+</form>

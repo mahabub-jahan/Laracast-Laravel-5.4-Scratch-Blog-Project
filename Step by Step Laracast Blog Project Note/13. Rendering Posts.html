@@ -1,0 +1,54 @@
+-Just like fetch data in index
+	 public function index()
+    {
+        $posts= Post::all();
+        return view('posts.index',compact('posts'));
+    }
+
+-User Carbon Library for Date and Time Formatted
+	WebSite Name: http://carbon.nesbot.com/docs/#api-formatting
+	Example:
+		<div class="blog-post">
+		    <h2 class="blog-post-title">{{ $post->title }}</h2>
+		    <p class="blog-post-meta">{{ $post->created_at->toFormattedDateString() }}</p>
+
+		    <p>{{ $post->body }}</p>
+
+		</div>
+
+
+#We can use normlly
+	public function show($id)
+    {
+    	$post = Post::find($id)
+        return view('posts.show',compact('post'));
+    }
+
+ Or we can use Route model binding
+
+ 	public function show(Post $post)
+    {
+        return view('posts.show',compact('post'));
+    }
+
+
+#If we see the Eloquent Builder.php class we can see how to write  query
+Example:
+public function index()
+{
+
+    $posts= Post::orderBy('created_at', 'desc')->get();
+    return view('posts.index',compact('posts'));
+}
+
+
+
+#In the end of Tutorial we learn
+	- View
+	-Controller
+	-Setup Migration
+	-Setup Model
+	-Cross Site request Fortuary
+	-Controller Validation
+	-Route Model Binding
+	-How to create data,redirect and save it

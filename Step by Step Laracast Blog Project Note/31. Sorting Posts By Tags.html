@@ -1,0 +1,140 @@
+Step 1:
+-Goto web.php we can write
+	//Tag
+	Route::get('/posts/tags/{tag}', 'PostsController@index');
+-Then goto PostsController.php
+	public function index(\App\Tag $tag = null)
+    {
+
+        return $tag;
+    } 
+    or
+    public function index(\App\Tag $tag = null)
+    {
+
+        return $tag->posts;
+    }
+-Goto browser "http://127.0.0.1:8000/posts/tags/1"  
+-It's just work fine but we don't use that we create a dedicate TagsController  
+
+Step 2:
+-command: php artisan make:controller TagController
+-web.php - Route::get('/posts/tags/{tag}', 'TagsController@index');
+-goto TagsController.php
+	public function index(Tag $tag)
+    {
+        return $tag;
+    }
+    or
+    public function index(Tag $tag)
+    {
+        return $tag->posts;
+    }
+
+-Same as step 1
+
+Step 3:
+-But I want to show tag in browser like that-"http://127.0.0.1:8000/posts/tags/personal" not "http://127.0.0.1:8000/posts/tags/1"
+-So how can we do that not to using model binding when we are not using primary key as a identifier
+
+-In app/Tag.php tag model
+	public function getRouteKeyName()
+    {
+        return 'name';
+    }
+    Note:By default it get id, but "return 'name'" says that if in browser "http://127.0.0.1:8000/posts/tags/personal" we type personal or php it going to say give me the tag where the name column is equal to personal or php
+
+Step 4:
+-TagController.php
+	public function index(Tag $tag)
+    {
+        $posts = $tag->posts;
+        return view('posts.index',compact('posts'));
+    }
+
+ It can show result in browser
+
+
+ Step 5:
+ -Now we want to show tag name in our sidebar that's why goto app/Providers/AppServiceProvider.php
+  public function boot()
+    {
+       view()->composer('layouts.sidebar',function($view){
+           $view->with('archives', \App\Post::archives());
+           $view->with('tags', \App\Tag::pluck('name'));
+       }); //or ue can use \View::
+    }
+
+-Goto sidebar.blade.php
+ {{--Tag--}}
+    <div class="sidebar-module">
+        <h4>Tags</h4>
+        <ol class="list-unstyled">
+            @foreach($tags as $tag)
+                <li>
+                    <a href="/posts/tags/{{ $tag }}">
+                        {{ $tag }}
+                    </a>
+                </li>
+            @endforeach
+        </ol>
+    </div>  
+
+
+Step 6:
+-There have a situation we have tags but no post associate them. In step 5 we can see the tag name but no post associate them. So the solution is-
+
+-Goto app/Providers/AppServiceProvider.php and update
+	public function boot()
+    {
+       view()->composer('layouts.sidebar',function($view){
+           $view->with('archives', \App\Post::archives());
+           $view->with('tags', \App\Tag::has('posts')->pluck('name'));
+       }); //or ue can use \View::
+    }
+
+Step 7:
+-We can also write
+	public function boot()
+    {
+       view()->composer('layouts.sidebar',function($view){
+           $view->with('archives', \App\Post::archives());
+           $view->with('tags', \App\Tag::has('post')->pluck('name'));
+       }); //or ue can use \View::
+    }
+to
+
+	public function boot()
+    {
+       view()->composer('layouts.sidebar',function($view){
+           $archives = \App\Post::archives();
+           $tags = \App\Tag::has('posts')->pluck('name');
+           $view->with(compact('archives', 'tags'));
+       }); //or ue can use \View::
+    }
+
+And it gives us same result
+
+Step 8:
+-goto show.blade.php
+
+@extends('layouts.master')
+@section('content')
+    <div class="col-sm-8 blog-main">
+        <h1>{{ $post->title }}</h1>
+
+        @if(count($post->tags))
+            <ul>
+                @foreach($post->tags as $tag)
+                    <li>
+                        <a href="/posts/tags/{{ $tag->name }}">
+                            {{ $tag->name }}
+                        </a>
+                    </li>
+                @endforeach
+            </ul>
+        @endif
+        
+
+        {{ $post->body }}
+        <hr>

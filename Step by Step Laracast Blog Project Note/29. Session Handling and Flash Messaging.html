@@ -1,0 +1,48 @@
+Step 1:
+-Goto RegistrationController.php and we do a session.
+-Let's see how session work....So goto helper.php and see function session($key = null, $default = null)
+
+
+Step 2:
+-In RegistrationController.php we write some code in store function
+	public function store(RegistrationForm $form)
+    {
+        $form->persist();
+        session('message', 'Here is a default message');
+        return redirect('/');
+    }
+-Now goto tinker
+	-session('message','Here is a default message');
+	-session(['message' => 'Something custom']);
+		-it gives us first null then if we run session('message','Here is a default message'); it gives us 'Something custom'
+
+Step 3:
+-we can use flash session, that would be available exactally one page load
+-PostController.php
+	public function store(/*Request $request*/)
+    {
+        $this->validate(request(),[
+            'title' => 'required',
+            'body' => 'required'
+        ]);
+
+        auth()->user()->publish(
+            new Post(request(['title','body']))
+        );
+
+  
+       session()->flash(
+           'message' , 'Your post has now been published'
+       );
+
+        //And then redirect to the home page.
+        return redirect('/');
+    }
+
+Step 4:
+Master.blade.php
+	@if ( $flash = session('message'))
+        <div class="alert alert-success" style="position:absolute; bottom: 20px; right: 20px; z-index: 3;" role="alert">
+            {{ $flash }}
+        </div>
+    @endif

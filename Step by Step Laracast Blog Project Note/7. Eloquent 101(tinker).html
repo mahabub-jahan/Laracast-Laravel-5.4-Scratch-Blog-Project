@@ -1,0 +1,61 @@
+# Eloquent is Larave active record implementation
+#tinker
+-It boot up laravel shell
+-It gives nice way to interect with application
+command: php artisan tinker
+		-App\Task::all() Note: here Task is a model name
+		-App\Task::where('id','>',2)->get();
+		-App\Task::pluck('body');
+		-$task = new App\Task;
+			-$task->body = 'Go to the market'
+			-$task->completed = flase;//it apply when completed is not set like ->default('false');
+			-$task->save();
+
+#Model:
+command: php artisan help make:model
+
+- we can create a static funtion to set a query in model
+	Example:
+	public static function incomplete()
+    {
+        return static::where('completed', 0)->get();
+    }
+
+    NB: this function has a problem, it can fetch data only specific query
+
+    Now in tinker:
+    	-App\Task::incomplete();
+
+-But if we can user sconpe---() function it will fetch not only specific query but also all query
+	Example:
+	public static function scopeIncomplete($query)
+    {
+        return $query->where('completed', 0);
+    }
+    Now in Tinker:
+     -App\Task::incomplete()->get();
+     	Note: it return an instant Eloquent Bulider like "Illuminate\Database\Eloquent\Collection" then it execute query
+     - App\Task::incomplete()->get();
+     	Note: in this time we can also execute other sql command like- App\Task::incomplete()->where('id','>=',1)->get();
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Note: If I deleted some file
+command: composer dump-autoload
